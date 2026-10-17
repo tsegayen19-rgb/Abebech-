@@ -2,10 +2,10 @@ import os
 from pyrogram import Client, filters
 import yt_dlp
 
-# Enter your credentials here
-API_ID = "YOUR_API_ID"        # Get this from my.telegram.org
-API_HASH = "YOUR_API_HASH"    # Get this from my.telegram.org
-BOT_TOKEN = "YOUR_BOT_TOKEN"  # Get this from @BotFather
+# Reading credentials from environment variables (GitHub Secrets)
+API_ID = int(os.environ.get("API_ID"))
+API_HASH = os.environ.get("API_HASH")
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
 
 app = Client("media_downloader_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
@@ -19,7 +19,6 @@ def download_media(client, message):
     status_msg = message.reply_text("Processing... Please wait ⏳")
 
     try:
-        # yt-dlp configuration to download the best quality
         ydl_opts = {
             'format': 'best',
             'outtmpl': '%(title)s.%(ext)s',
@@ -27,16 +26,13 @@ def download_media(client, message):
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # Download the video/audio
             status_msg.edit_text("Downloading... 📥")
             info = ydl.extract_info(url, download=True)
             file_name = ydl.prepare_filename(info)
 
-        # Upload to Telegram
         status_msg.edit_text("Uploading to Telegram... 🚀")
         message.reply_video(video=file_name, caption=f"🎬 {info.get('title', 'Video')}\n\nDownloaded via Bot")
 
-        # Delete the file from the server after sending to save space
         os.remove(file_name)
         status_msg.delete()
 
